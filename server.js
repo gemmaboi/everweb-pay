@@ -5,6 +5,16 @@ const { JWT } = require("google-auth-library")
 const cors = require("cors")
 require("dotenv").config()
 
+// Validate required environment variables
+const requiredEnvVars = ["EVERWEBINAR_API_KEY", "WEBINAR_ID"]
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(`Missing required environment variable: ${varName}`)
+  } else {
+    console.log(`Found environment variable: ${varName}`)
+  }
+})
+
 const app = express()
 const port = process.env.PORT || 3000
 
@@ -45,12 +55,22 @@ async function retryApiCall(apiCall, maxRetries = 3) {
 // Endpoint to fetch webinar schedules
 app.get("/api/schedules", async (req, res) => {
   try {
+    console.log("API Key present:", !!process.env.EVERWEBINAR_API_KEY)
+    console.log("Webinar ID present:", !!process.env.WEBINAR_ID)
+
     const schedules = await retryApiCall(async () => {
-      const response = await axios.post(EVERWEBINAR_API_URL, {
+      const requestBody = {
         api_key: process.env.EVERWEBINAR_API_KEY,
         webinar_id: process.env.WEBINAR_ID,
         page: 0,
+      }
+
+      console.log("Making request with body:", {
+        ...requestBody,
+        api_key: requestBody.api_key ? "[PRESENT]" : "[MISSING]",
       })
+
+      const response = await axios.post(EVERWEBINAR_API_URL, requestBody)
 
       if (!response.data || !response.data.webinar || !response.data.webinar.schedules) {
         console.error("Invalid response format:", response.data)
@@ -65,10 +85,15 @@ app.get("/api/schedules", async (req, res) => {
     })
     res.json(schedules)
   } catch (error) {
-    console.error("Error fetching schedules:", error.response?.data || error.message)
+    const errorDetails = {
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack,
+    }
+    console.error("Detailed error in schedules endpoint:", errorDetails)
     res.status(500).json({
       error: "Failed to fetch schedules",
-      details: error.response?.data || error.message,
+      details: errorDetails,
     })
   }
 })
