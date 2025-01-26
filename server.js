@@ -35,10 +35,18 @@ const EVERWEBINAR_REGISTER_URL = "https://api.webinarjam.com/everwebinar/registe
 
 // Function to format the private key
 function formatPrivateKey(key) {
-  const header = "-----BEGIN PRIVATE KEY-----"
-  const footer = "-----END PRIVATE KEY-----"
-  const keyContent = key.replace(/\\n/g, "").replace(header, "").replace(footer, "").trim()
-  return `${header}\n${keyContent.match(/.{1,64}/g).join("\n")}\n${footer}`
+  // Remove any extra quotes and newlines
+  key = key.replace(/\\n/g, "\n").replace(/"/g, "")
+
+  // Ensure the key has the correct header and footer
+  if (!key.startsWith("-----BEGIN PRIVATE KEY-----")) {
+    key = "-----BEGIN PRIVATE KEY-----\n" + key
+  }
+  if (!key.endsWith("-----END PRIVATE KEY-----")) {
+    key = key + "\n-----END PRIVATE KEY-----"
+  }
+
+  return key
 }
 
 // Function to initialize Google Sheets
