@@ -33,10 +33,18 @@ app.use(cors())
 const EVERWEBINAR_API_URL = "https://api.webinarjam.com/everwebinar/webinar"
 const EVERWEBINAR_REGISTER_URL = "https://api.webinarjam.com/everwebinar/register"
 
+// Function to format the private key
+function formatPrivateKey(key) {
+  const header = "-----BEGIN PRIVATE KEY-----"
+  const footer = "-----END PRIVATE KEY-----"
+  const keyContent = key.replace(/\\n/g, "").replace(header, "").replace(footer, "").trim()
+  return `${header}\n${keyContent.match(/.{1,64}/g).join("\n")}\n${footer}`
+}
+
 // Function to initialize Google Sheets
 async function initializeGoogleSheets(sheetId) {
   try {
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n")
+    const privateKey = formatPrivateKey(process.env.GOOGLE_PRIVATE_KEY)
     console.log("Private key length:", privateKey.length)
     console.log("Private key first 10 characters:", privateKey.substring(0, 10))
     console.log("Private key last 10 characters:", privateKey.substring(privateKey.length - 10))
