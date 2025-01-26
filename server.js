@@ -49,7 +49,14 @@ app.get("/api/schedules", async (req, res) => {
       const response = await axios.post(EVERWEBINAR_API_URL, {
         api_key: process.env.EVERWEBINAR_API_KEY,
         webinar_id: process.env.WEBINAR_ID,
+        page: 0,
       })
+
+      if (!response.data || !response.data.webinar || !response.data.webinar.schedules) {
+        console.error("Invalid response format:", response.data)
+        throw new Error("Invalid API response format")
+      }
+
       return response.data.webinar.schedules.map((schedule) => ({
         date: schedule.date,
         schedule: schedule.schedule,
@@ -58,8 +65,11 @@ app.get("/api/schedules", async (req, res) => {
     })
     res.json(schedules)
   } catch (error) {
-    console.error("Error fetching schedules:", error)
-    res.status(500).json({ error: "Failed to fetch schedules" })
+    console.error("Error fetching schedules:", error.response?.data || error.message)
+    res.status(500).json({
+      error: "Failed to fetch schedules",
+      details: error.response?.data || error.message,
+    })
   }
 })
 
@@ -69,10 +79,12 @@ async function registerToEverWebinar(userData) {
     const response = await axios.post(EVERWEBINAR_REGISTER_URL, {
       api_key: process.env.EVERWEBINAR_API_KEY,
       webinar_id: process.env.WEBINAR_ID,
+      schedule: userData.scheduleId,
+      email: userData.email,
       first_name: userData.firstName,
       last_name: userData.lastName,
-      email: userData.email,
-      schedule: userData.scheduleId,
+      timezone: "UTC", // Add timezone parameter
+      page: 0,
     })
     console.log("EverWebinar registration response:", response.data)
     return response.data
