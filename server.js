@@ -6,7 +6,14 @@ const cors = require("cors")
 require("dotenv").config()
 
 // Validate required environment variables
-const requiredEnvVars = ["EVERWEBINAR_API_KEY", "WEBINAR_ID"]
+const requiredEnvVars = [
+  "EVERWEBINAR_API_KEY",
+  "WEBINAR_ID",
+  "PAYHIP_SHEET_ID",
+  "EVERWEBINAR_SHEET_ID",
+  "GOOGLE_SERVICE_ACCOUNT_EMAIL",
+  "GOOGLE_PRIVATE_KEY",
+]
 requiredEnvVars.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(`Missing required environment variable: ${varName}`)
@@ -28,15 +35,20 @@ const EVERWEBINAR_REGISTER_URL = "https://api.webinarjam.com/everwebinar/registe
 
 // Function to initialize Google Sheets
 async function initializeGoogleSheets(sheetId) {
-  const auth = new JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  })
+  try {
+    const auth = new JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    })
 
-  const doc = new GoogleSpreadsheet(sheetId, auth)
-  await doc.loadInfo()
-  return doc
+    const doc = new GoogleSpreadsheet(sheetId, auth)
+    await doc.loadInfo()
+    return doc
+  } catch (error) {
+    console.error("Error initializing Google Sheets:", error)
+    throw error
+  }
 }
 
 // Function to retry API calls
@@ -108,7 +120,7 @@ async function registerToEverWebinar(userData) {
       email: userData.email,
       first_name: userData.firstName,
       last_name: userData.lastName,
-      timezone: "UTC", // Add timezone parameter
+      timezone: "UTC",
       page: 0,
     })
     console.log("EverWebinar registration response:", response.data)
@@ -180,7 +192,7 @@ app.post("/api/submit", async (req, res) => {
     })
   } catch (error) {
     console.error("Error in form submission or EverWebinar registration:", error)
-    res.status(500).json({ error: "Failed to submit form or register to EverWebinar" })
+    res.status(500).json({ error: "Failed to submit form or register to EverWebinar", details: error.message })
   }
 })
 
