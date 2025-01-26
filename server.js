@@ -36,9 +36,14 @@ const EVERWEBINAR_REGISTER_URL = "https://api.webinarjam.com/everwebinar/registe
 // Function to initialize Google Sheets
 async function initializeGoogleSheets(sheetId) {
   try {
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n")
+    console.log("Private key length:", privateKey.length)
+    console.log("Private key first 10 characters:", privateKey.substring(0, 10))
+    console.log("Private key last 10 characters:", privateKey.substring(privateKey.length - 10))
+
     const auth = new JWT({
       email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      key: privateKey,
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     })
 
@@ -47,6 +52,7 @@ async function initializeGoogleSheets(sheetId) {
     return doc
   } catch (error) {
     console.error("Error initializing Google Sheets:", error)
+    console.error("Error stack:", error.stack)
     throw error
   }
 }
