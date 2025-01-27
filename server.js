@@ -3,6 +3,7 @@ const axios = require("axios")
 const { GoogleSpreadsheet } = require("google-spreadsheet")
 const { JWT } = require("google-auth-library")
 const cors = require("cors")
+const { startKeepAlive } = require("./utils/keep-alive")
 require("dotenv").config()
 
 // Validate required environment variables
@@ -218,7 +219,14 @@ app.post("/api/submit", async (req, res) => {
   }
 })
 
+// Add health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() })
+})
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
+  // Start the keep-alive service after server starts
+  startKeepAlive()
 })
 
